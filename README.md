@@ -46,7 +46,10 @@ Example with all optional variables defined with their default values
 make tar LINUX_ARCH="amd64 arm arm64 riscv64"
 
 # Pushing them up to Github as a Release
-make github-push VERSION={CoreDNS Version} GITHUB_OWNER=nerdynick GITHUB_REPO_NAME=coredns-customizer GITHUB_ACCESS_TOKEN={Your Token, can also be done as ENV Var}
+# All Variables are optional:
+#     * VERSION will parse the Version from the CoreDNS Clone
+#     * GITHUB_REPO will default to using the current Repo URL
+make github-create-release github-upload github-publish-release VERSION={CoreDNS Version} GITHUB_REPO=nerdynick/coredns-customizer
 ```
 
 ## Docker Image Build and Push to DockerHub
