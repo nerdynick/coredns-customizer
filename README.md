@@ -78,3 +78,43 @@ make docker-build LINUX_ARCH="amd64 arm arm64 riscv64" DOCKER_REPO={Your Docker 
 
 make docker-push LINUX_ARCH="amd64 arm arm64 riscv64" DOCKER_REPO={Your Docker Repo, Usually just your Org or Username} DOCKER_NAME={Name for the Container} COREDNS_VERSION={CoreDNS Version} CUSTOMIZED_VERSION={Version representing your changes to CoreDNS}
 ```
+
+# Common Issues
+
+## I'm getting `NXDOMAIN` or `NOERROR` even through my plugin should be answering
+
+One of the concepts that often gets overlooked with CoreDNS & Plugins is that plugins are executed in the order they appear in the `plugin.cfg` files. 
+So when using an append workflow with this tool. You will result in all your additional plugins being placed after the native CoreDNS ones.
+With that understanding we can now examine your [Server Blocks](https://coredns.io/manual/toc/#server-blocks) and what all plugins you are calling. 
+
+Commonly, outside of your plugins speficications/statements, folks will tend to use at least 1 of these 2 other plugins, [File](https://coredns.io/plugins/file/) and [Forward](https://coredns.io/plugins/forward/).
+Both of these plugins handle the resolution of address via native plugins as their names imply, via a local file or via forwarding the request on to another DNS server, respectively.
+This is not to say some other plugin may be the source of the challange and you should investigate if it has support for a similar route to resolving the challenge.
+
+In both of these plugins cases, if they have been configured to resolve for a specific DNS Zone(s), they will either return an `NXDOAMIN` or `NOERROR` for specific addresses that are a part of those zones.
+However they both support a configuration flag to instead just go to the next plugin. 
+In the case of *File* this is done via the `fallthrough` flag and with *Forward* this is done via it's `next [RCODE..]` flag. 
+By including these in the plugin specification. you can have a sorta daisy chain of attempted resolution in order of the `plugin.cfg` file. 
+
+*Example*
+```
+example.com:53 {
+  traefik http://192.168.0.100:8080/api {
+    a 192.168.0.100
+    refreshinterval 30
+    ttl 30
+  }
+
+  file example.com.zone example.com {
+    reload 60s
+    fallthrough # Not defining any zone after will result in all zones listed falling through
+  }
+}
+
+.:53 {
+  forward . tls://1.1.1.1 tls://1.0.0.1 {
+    tls_servername cloudflare-dns.com
+    next NXDOMAIN
+  }
+}
+```
