@@ -27,7 +27,7 @@ make build-append
 
 Example with all optional variables defined with their default values
 ```bash
-make build-append GIT_BRANCH=master GIT_REPO=https://github.com/coredns/coredns.git LINUX_ARCH="amd64 arm arm64 riscv64"
+make build-append COREDNS_GIT_BRANCH=master COREDNS_GIT_REPO=https://github.com/coredns/coredns.git LINUX_ARCH="amd64 arm arm64 riscv64"
 ```
 
 *Note:* The `LINUX_ARCH` variable only controls all the architecture that are built against the Linux OS. Darwin/MacOS will always be built with amd64 & arm64 and windows will always be built with amd64.
@@ -36,8 +36,15 @@ If this is all you need, then you are done and can find the built executables wi
 
 ## Tarball and Release on Github
 
+*NOTE:* Unlike CoreDNS's stock `MAKEFILE`, this one uses the Github CLI `gh` for all Github related actions. 
+The idea being to make maintainability a bit more manageable if/when Github desides to make changes to the API over time.
+This does mean that the Github CLI is a dependency of the build pipeline and will need to be installed. 
+Of note, if building via the Github Actions, the selected build systems already have this installed for you out of the box.
+
+Example using defaults and required args
 ```bash
-make tar github-push GITHUB_OWNER=nerdynik GITHUB_REPO_NAME=coredns-customizer GITHUB_ACCESS_TOKEN={Your Token, can also be done as ENV Var}
+make tar
+make github-create-release github-upload github-publish-release GITHUB_REPO=nerdynick/coredns-customizer GITHUB_ACCESS_TOKEN={Your GH Token, can also be done as ENV Var of the same name}
 ```
 
 Example with all optional variables defined with their default values
@@ -47,9 +54,9 @@ make tar LINUX_ARCH="amd64 arm arm64 riscv64"
 
 # Pushing them up to Github as a Release
 # All Variables are optional:
-#     * VERSION will parse the Version from the CoreDNS Clone
+#     * COREDNS_VERSION will parse the Version from the CoreDNS Clone
 #     * GITHUB_REPO will default to using the current Repo URL
-make github-create-release github-upload github-publish-release VERSION={CoreDNS Version} GITHUB_REPO=nerdynick/coredns-customizer
+make github-create-release github-upload github-publish-release COREDNS_VERSION={CoreDNS Version} CUSTOMIZED_VERSION={Version representing your changes to CoreDNS} GITHUB_REPO=nerdynick/coredns-customizer
 ```
 
 ## Docker Image Build and Push to DockerHub
@@ -59,7 +66,7 @@ make github-create-release github-upload github-publish-release VERSION={CoreDNS
 
 export DOCKER_LOGIN={Your Docker Hub username}
 export DOCKER_PASSWORD={Your Docker Hub password}
-make docker-build docker-push DOCKER_REPO=nerdynik DOCKER_NAME=coredns
+make docker-build docker-push DOCKER_REPO={Your Docker Repo, Usually just your Org or Username} DOCKER_NAME={Name for the Container}
 ```
 
 Example with all optional variables defined with their default values
@@ -67,7 +74,7 @@ Example with all optional variables defined with their default values
 export DOCKER_LOGIN={Your Docker Hub username}
 export DOCKER_PASSWORD={Your Docker Hub password}
 
-make docker-build LINUX_ARCH="amd64 arm arm64 riscv64" DOCKER_REPO=nerdynik DOCKER_NAME=coredns VERSION={CoreDNS Version}
+make docker-build LINUX_ARCH="amd64 arm arm64 riscv64" DOCKER_REPO={Your Docker Repo, Usually just your Org or Username} DOCKER_NAME={Name for the Container} COREDNS_VERSION={CoreDNS Version} CUSTOMIZED_VERSION={Version representing your changes to CoreDNS}
 
-make docker-push LINUX_ARCH="amd64 arm arm64 riscv64" DOCKER_REPO=nerdynik DOCKER_NAME=coredns VERSION={CoreDNS Version}
+make docker-push LINUX_ARCH="amd64 arm arm64 riscv64" DOCKER_REPO={Your Docker Repo, Usually just your Org or Username} DOCKER_NAME={Name for the Container} COREDNS_VERSION={CoreDNS Version} CUSTOMIZED_VERSION={Version representing your changes to CoreDNS}
 ```
